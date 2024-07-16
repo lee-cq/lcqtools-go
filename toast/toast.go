@@ -363,15 +363,12 @@ func invokeTemporaryScript(content string) error {
 	return nil
 }
 
-func main() {
+func ToolsNotify(title, msg string) {
 	notification := Notification{
-		AppID:   "Appid test",
-		Title:   "Title test",
-		Message: "Message Test",
-		Actions: []Action{
-			{"protocol", "Butten", ""},
-			{"protocol", "Me too!", ""},
-		},
+		AppID:    "LCQ Tools",
+		Title:    "Title test",
+		Message:  "Message Test",
+		Duration: Short,
 	}
 	err := notification.Push()
 	if err != nil {

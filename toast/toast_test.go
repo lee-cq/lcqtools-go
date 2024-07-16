@@ -40,3 +40,7 @@ func TestToastPush(t *testing.T) {
 		})
 	}
 }
+
+func TestToolsNotify(t *testing.T) {
+	toast.ToolsNotify("Test Tools Notify", "Msg")
+}
