@@ -6,7 +6,6 @@ import (
 	"crypto/sha256"
 	"crypto/tls"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -41,12 +40,11 @@ type RequestOptions struct {
 	Token     string
 	Query     map[string]string
 	Headers   map[string]string
-	Body      map[string]string
+	Body      []byte
 
 	Timestamp     int64
 	authorization string
 	algorithm     string
-	payload       []byte
 }
 
 func NewRequest() *RequestOptions {
@@ -138,10 +136,7 @@ func (ops *RequestOptions) Signature() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	ops.payload, err = json.Marshal(ops.Body)
-	if err != nil {
-		return "", err
-	}
+
 	canonicalHeaders, signedHeaders, err := ops.canonicalHeadersAndSignedHeaders()
 	if err != nil {
 		return "", err
@@ -154,7 +149,7 @@ func (ops *RequestOptions) Signature() (string, error) {
 		canonicalQueries,
 		canonicalHeaders,
 		signedHeaders,
-		sha256hex(string(ops.payload)),
+		sha256hex(string(ops.Body)),
 	}, "\n")
 
 	str2sgin := strings.Join([]string{
@@ -186,7 +181,7 @@ func (ops *RequestOptions) Request(verifyTLS bool) (string, error) {
 		return "", err
 	}
 
-	httpRequest, _ := http.NewRequest("POST", ops.Url, strings.NewReader(string(ops.payload)))
+	httpRequest, _ := http.NewRequest("POST", ops.Url, strings.NewReader(string(ops.Body)))
 	httpRequest.Header = map[string][]string{
 		// "Host":           {ops.H},
 		"X-TC-Action":    {ops.Action},
@@ -233,26 +228,4 @@ func (ops *RequestOptions) Request(verifyTLS bool) (string, error) {
 	}
 	log.Println(body.String())
 	return "", nil
-}
-
-func TencentOcrBase(imageData string, language string, verifyTLS ...bool) (string, error) {
-	// Replace with your actual Tencent AI API credentials
-	req := RequestOptions{
-		Method:    "POST",
-		Url:       "https://ocr.tencentcloudapi.com",
-		Service:   "ocr",
-		Action:    "GeneralBasicOCR",
-		Region:    "ap-guangzhou",
-		Version:   "2018-11-19",
-		SecretId:  "SecretId",
-		SecretKey: "SecretKey",
-		Token:     "",
-		Body:      map[string]string{"ImageBase64": string(imageData)},
-	}
-	if len(verifyTLS) > 0 {
-		return req.Request(verifyTLS[0])
-	} else {
-		return req.Request(false)
-	}
-
 }
