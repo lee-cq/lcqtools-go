@@ -31,3 +31,10 @@ func TestWriteAndReadText(t *testing.T) {
 		log.Panicf("Failed: \"%s\" != \"%s\"", text, testStr)
 	}
 }
+
+func TestReadImage(t *testing.T) {
+	_, err := clipboardm.ReadImage()
+	if err != nil {
+		log.Panic(err)
+	}
+}

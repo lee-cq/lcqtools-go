@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"crypto/tls"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -40,7 +41,7 @@ type RequestOptions struct {
 	Token     string
 	Query     map[string]string
 	Headers   map[string]string
-	Body      []byte
+	Body      string
 
 	Timestamp     int64
 	authorization string
@@ -141,7 +142,7 @@ func (ops *RequestOptions) Signature() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	fmt.Printf("%s\n\n%s", canonicalHeaders, signedHeaders)
+	// fmt.Printf("%s\n\n%s", canonicalHeaders, signedHeaders)
 
 	canonicalRequest := strings.Join([]string{
 		ops.Method,
@@ -149,7 +150,7 @@ func (ops *RequestOptions) Signature() (string, error) {
 		canonicalQueries,
 		canonicalHeaders,
 		signedHeaders,
-		sha256hex(string(ops.Body)),
+		sha256hex(ops.Body),
 	}, "\n")
 
 	str2sgin := strings.Join([]string{
@@ -176,12 +177,12 @@ func (ops *RequestOptions) Signature() (string, error) {
 	return ops.authorization, nil
 }
 
-func (ops *RequestOptions) Request(verifyTLS bool) (string, error) {
+func (ops *RequestOptions) RawRequest(verifyTLS bool) ([]byte, error) {
 	if _, err := ops.Signature(); err != nil {
-		return "", err
+		return nil, err
 	}
 
-	httpRequest, _ := http.NewRequest("POST", ops.Url, strings.NewReader(string(ops.Body)))
+	httpRequest, _ := http.NewRequest("POST", ops.Url, strings.NewReader(ops.Body))
 	httpRequest.Header = map[string][]string{
 		// "Host":           {ops.H},
 		"X-TC-Action":    {ops.Action},
@@ -212,7 +213,7 @@ func (ops *RequestOptions) Request(verifyTLS bool) (string, error) {
 	resp, err := httpClient.Do(httpRequest)
 	if err != nil {
 		log.Println(err)
-		return "", err
+		return nil, err
 	}
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
@@ -224,8 +225,55 @@ func (ops *RequestOptions) Request(verifyTLS bool) (string, error) {
 	_, err = body.ReadFrom(resp.Body)
 	if err != nil {
 		log.Println(err)
-		return "", err
+		return nil, err
 	}
-	log.Println(body.String())
-	return "", nil
+
+	if body.String() == "<nil>" {
+		return nil, fmt.Errorf("HTTP Response No Body")
+	}
+
+	// fmt.Printf("%#v", (ops))
+	PrintRawRequest(httpRequest, ops.Body) // log Request
+	fmt.Printf("<< %s\n", body.String())
+
+	return body.Bytes(), nil
+}
+
+func (ops *RequestOptions) Request(verifyTLS bool) Response {
+	rr := jResponse{}
+	bb, err := ops.RawRequest(verifyTLS)
+	if err != nil {
+		rr.Response.Error.Code = "RequestError"
+		rr.Response.Error.Message = err.Error()
+		return rr.Response
+	}
+
+	if err := json.Unmarshal(bb, &rr); err != nil {
+		rr.Response.Error.Code = "ResponseJsonDecodeError"
+		rr.Response.Error.Message = err.Error()
+		return rr.Response
+	}
+
+	return rr.Response
+}
+
+type RespError struct {
+	Code    string `json:"Code"`
+	Message string `json:"Message"`
+}
+
+type Response struct {
+	Error     RespError `json:"Error"`
+	RequestId string    `json:"RequestId"`
+
+	// TextBase
+	TargetText string `json:"TargetText"`
+	Source     string `json:"Source"`
+	Target     string `json:"Target"`
+
+	// OCR GinBase
+}
+
+type jResponse struct {
+	Response Response `json:"Response"`
 }

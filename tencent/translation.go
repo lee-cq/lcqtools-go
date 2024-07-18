@@ -1,6 +1,10 @@
 package tencent
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"fmt"
+	"os"
+)
 
 type TranslateTextRequestOps struct {
 	SourceText       string
@@ -8,50 +12,51 @@ type TranslateTextRequestOps struct {
 	Target           string
 	ProjectId        int
 	UntranslatedText string
-	TermRepoIDList   []string
-	SentRepoIDList   []string
+	TermRepoIDList   []string `json:"TermRepoIDList,omitempty"`
+	SentRepoIDList   []string `json:"TermRepoIDList,omitempty"`
 }
 
-type TransloateResponseSuccess struct {
-	Response struct {
-		TargetText string `json:"SourceText"`
-		Source     string `json:"Source"`
-		Target     string `json:"Target"`
-		RequestId  string `json:"RequestId"`
-	} `json:"Response"`
-}
-
-func (rOps TranslateTextRequestOps) Request(verifyTLS ...bool) (string, error) {
+func (rOps TranslateTextRequestOps) Request(verifyTLS ...bool) (Response, error) {
 	// Replace with your actual Tencent AI API credentials
 	payload, err := json.Marshal(rOps)
 	if err != nil {
-		return "", err
+		return Response{}, err
 	}
 
 	req := RequestOptions{
 		Method:    "POST",
-		Url:       "https://ocr.tencentcloudapi.com",
+		Url:       "https://tmt.tencentcloudapi.com",
 		Service:   "tmt",
 		Action:    "TextTranslate",
-		Region:    "ap-guangzhou",
+		Region:    "ap-chengdu",
 		Version:   "2018-03-21",
-		SecretId:  "SecretId",
-		SecretKey: "SecretKey",
+		SecretId:  os.Getenv("TC_LCQTOOLS_SECRET_ID"),
+		SecretKey: os.Getenv("TC_LCQTOOLS_SECRET_KEY"),
 		Token:     "",
-		Body:      payload,
+		Body:      string(payload),
 	}
 	if len(verifyTLS) > 0 {
-		return req.Request(verifyTLS[0])
+		return req.Request(verifyTLS[0]), nil
 	} else {
-		return req.Request(false)
+		return req.Request(false), nil
 	}
 }
 
-func RawTextTranslate(text, fromLang, toLang string, verify ...bool) (string, error) {
-	return TranslateTextRequestOps{
-		SourceText: text,
-		Source:     fromLang,
-		Target:     toLang,
-		ProjectId:  0,
+func TextTranslate(text, fromLang, toLang string, verify ...bool) (Response, error) {
+	resp, err := TranslateTextRequestOps{
+		SourceText:     text,
+		Source:         fromLang,
+		Target:         toLang,
+		ProjectId:      0,
+		TermRepoIDList: []string{},
+		SentRepoIDList: []string{},
 	}.Request(verify...)
+	if err != nil {
+		return Response{}, err
+	}
+	if resp.Error.Code != "" {
+		return resp, fmt.Errorf("ResponseError: %s: %s", resp.Error.Code, resp.Error.Message)
+	}
+
+	return resp, nil
 }

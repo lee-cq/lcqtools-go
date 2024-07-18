@@ -28,6 +28,7 @@ var (
 	globalFree   = kernel32.NewProc("GlobalFree")
 	globalLock   = kernel32.NewProc("GlobalLock")
 	globalUnlock = kernel32.NewProc("GlobalUnlock")
+	globalSize   = kernel32.NewProc("GlobalSize")
 	lstrcpy      = kernel32.NewProc("lstrcpyW")
 )
 
@@ -155,9 +156,4 @@ func WriteText(text string) error {
 		return err
 	}
 	return nil
-}
-
-func ReadImage() ([]byte, error) {
-
-	return []byte{0x22}, nil
 }
