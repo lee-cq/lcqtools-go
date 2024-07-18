@@ -13,7 +13,7 @@ type TranslateTextRequestOps struct {
 	ProjectId        int
 	UntranslatedText string
 	TermRepoIDList   []string `json:"TermRepoIDList,omitempty"`
-	SentRepoIDList   []string `json:"TermRepoIDList,omitempty"`
+	SentRepoIDList   []string `json:"SentRepoIDList,omitempty"`
 }
 
 func (rOps TranslateTextRequestOps) Request(verifyTLS ...bool) (Response, error) {
