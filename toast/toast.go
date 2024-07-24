@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -361,17 +360,4 @@ func invokeTemporaryScript(content string) error {
 		return err
 	}
 	return nil
-}
-
-func ToolsNotify(title, msg string) {
-	notification := Notification{
-		AppID:    "LCQ Tools",
-		Title:    title,
-		Message:  msg,
-		Duration: Short,
-	}
-	err := notification.Push()
-	if err != nil {
-		log.Fatalln(err)
-	}
 }

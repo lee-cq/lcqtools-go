@@ -185,7 +185,7 @@ func (ops *RequestOptions) RawRequest(verifyTLS bool) ([]byte, error) {
 	httpRequest, _ := http.NewRequest("POST", ops.Url, strings.NewReader(ops.Body))
 	httpRequest.Header = map[string][]string{
 		// "Host":           {ops.H},
-		"X-TC-Action":    {ops.Action},
+		// "X-TC-Action":    {ops.Action},
 		"X-TC-Version":   {ops.Version},
 		"X-TC-Timestamp": {strconv.FormatInt(ops.Timestamp, 10)},
 	}

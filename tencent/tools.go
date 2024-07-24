@@ -9,7 +9,7 @@ import (
 
 func PrintRawRequest(req *http.Request, body string) {
 
-	rp := fmt.Sprintf("> %s %s %s\n", req.Method, req.RequestURI, req.Proto)
+	rp := fmt.Sprintf(">> %s %s %s\n", req.Method, req.URL.RawPath, req.Proto)
 	hl := make([]string, 0)
 	for k, vs := range req.Header {
 		if k == "" {
@@ -21,7 +21,7 @@ func PrintRawRequest(req *http.Request, body string) {
 	rb := ">> " + strings.Join(strings.Split(body, "\n"), "\n>> ")
 
 	// 输出原始的 HTTP 请求报文
-	fmt.Println(rp + rh + "\n" + rb)
+	fmt.Println(rp + rh + ">> \n" + rb)
 }
 
 func getSearetId() string {
